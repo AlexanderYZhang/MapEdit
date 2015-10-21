@@ -29,6 +29,7 @@ function GraphEdit(d3, _, map, graph, parameters) {
 
     map.on("viewreset", update);
     map.on("move", function () {
+        // Translate the SVG.
         var transform = d3.select('.leaflet-map-pane').style('transform'),
             translation = transform.split(",").map(function(x) { return x.trim().replace(")", ""); });
         var x = parseInt(translation[translation.length - 2], 10),
@@ -37,7 +38,6 @@ function GraphEdit(d3, _, map, graph, parameters) {
         segmentContainer.attr("transform", "translate(" + x + "," + y + ")");
         temporaryDomContainer.attr("transform", "translate(" + x + "," + y + ")");
         vertexContainer.attr("transform", "translate(" + x + "," + y + ")");
-        console.log("move", translation);
     });
 
 
@@ -107,7 +107,7 @@ function GraphEdit(d3, _, map, graph, parameters) {
     function mouseUp () {
         if (mode == "draw") {
             d3.event.stopPropagation();
-            var point = map.layerPointToLatLng(L.point(d3.mouse(this)[0], d3.mouse(this)[1]));
+            var point = map.layerPointToLatLng(new L.Point(d3.mouse(this)[0], d3.mouse(this)[1]));
             if (mousedownVertex) {
                 // Create a new vertex and a new edge
                 var newVertex = graph.addVertex(graph.getUniqueVertexId(), point.lng, point.lat);
@@ -119,8 +119,10 @@ function GraphEdit(d3, _, map, graph, parameters) {
             mousedownVertex = null;
             temporaryVertices.splice(0, temporaryVertices.length);  // Empty an array. http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
             temporaryEdges.splice(0, temporaryEdges.length);
-        } else if (mode == "edit" || mode == "delete") {
-            d3.event.stopPropagation();
+        } else if (mode == "edit") {
+            // d3.event.stopPropagation();
+        } else if (mode == "delete") {
+            // d3.event.stopPropagation();
         }
 
         update();
@@ -129,8 +131,11 @@ function GraphEdit(d3, _, map, graph, parameters) {
     function mouseMove() {
         if (mode == "draw") {
             if (temporaryVertices.length == 2) {
+                var point = map.layerPointToLatLng(new L.Point(d3.mouse(this)[0], d3.mouse(this)[1]));
                 temporaryVertices[1].x = d3.mouse(this)[0];
                 temporaryVertices[1].y = d3.mouse(this)[1];
+                temporaryVertices[1].lat = point.lat;
+                temporaryVertices[1].lng = point.lng;
             }
         }
     }
@@ -142,6 +147,7 @@ function GraphEdit(d3, _, map, graph, parameters) {
      * @param d
      */
     function startedDraggingVertex(d) {
+        console.log("Start dragging");
         if (mode == "edit") {
             d3.event.sourceEvent.stopPropagation();
             d3.select(this).classed("dragging", true);
@@ -153,6 +159,7 @@ function GraphEdit(d3, _, map, graph, parameters) {
      * @param d
      */
     function draggingVertex(d) {
+        console.log("Dragging Vertex");
         if (mode == "edit") {
             // Update node coordinates
             d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
@@ -161,12 +168,17 @@ function GraphEdit(d3, _, map, graph, parameters) {
                 edges = vertex.getEdges();
 
             _.each(edges, function (e) {
+                var point = map.layerPointToLatLng(new L.Point(d.x, d.y));
                 if (e.source.id === d.id) {
                     e.source.x = d.x;
                     e.source.y = d.y;
+                    e.source.lat = point.lat;
+                    e.source.lng = point.lng;
                 } else {
                     e.target.x = d.x;
                     e.target.y = d.y;
+                    e.target.lat = point.lat;
+                    e.target.lng = point.lng;
                 }
             });
         }
@@ -178,7 +190,10 @@ function GraphEdit(d3, _, map, graph, parameters) {
      * @param d
      */
     function endedDraggingVertex() {
+        console.log("End editing");
         if (mode == "edit") {
+            d3.event.sourceEvent.stopPropagation();
+
             d3.select(this).classed("dragging", false);
         }
         update();
