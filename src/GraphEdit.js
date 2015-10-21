@@ -107,7 +107,6 @@ function GraphEdit(d3, _, map, graph, parameters) {
     function mouseUp () {
         if (mode == "draw") {
             d3.event.stopPropagation();
-            console.log(this, d3.mouse(this));
             var offset = {
                 x: parseInt(d3.select(this).style("left").replace("px", ""), 10),
                 y: parseInt(d3.select(this).style("top").replace("px", ""), 10)
@@ -308,8 +307,6 @@ function GraphEdit(d3, _, map, graph, parameters) {
             .data(graph.edges);
         line.enter().append("line")
             .attr("stroke-width", 3)
-            .attr("stroke", "black")
-            .attr("stroke-opacity", 0.2)
             .on(edgeEvents)
             .call(dragEdge);
         line.exit().remove();
@@ -332,9 +329,7 @@ function GraphEdit(d3, _, map, graph, parameters) {
         temporaryLine = temporaryDomContainer.selectAll("line")
             .data(temporaryEdges);
         temporaryLine.enter().append("line")
-            .attr("stroke-width", 3)
-            .attr("stroke", "black")
-            .attr("stroke-opacity", 0.2);
+            .attr("stroke-width", 3);
         temporaryLine.exit().remove();
 
 

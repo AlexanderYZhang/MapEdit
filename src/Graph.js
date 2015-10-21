@@ -4,7 +4,7 @@
  * @constructor
  */
 function Graph(_) {
-    var _vertices = {},
+    var _vertices = {},// This object is not necessary anymore...
         _edges = {},
         _vertexArray = [],
         _edgeArray = [],
@@ -125,6 +125,15 @@ function Graph(_) {
         vertex.y = y;
     }
 
+
+    function toString () {
+        var concatenatedString = "";
+        for (var i = 0; i < _vertexArray.length; i++) {
+            concatenatedString += _vertices[i].lat + "," + _vertices[i].lng + "\n";
+        }
+        return concatenatedString;
+    }
+
     return {
         vertices: _vertexArray,
         edges: _edgeArray,
@@ -136,7 +145,8 @@ function Graph(_) {
         getEdge: getEdge,
         removeVertex: removeVertex,
         removeEdge: removeEdge,
-        setVertexCoordinate: setVertexCoordinate
+        setVertexCoordinate: setVertexCoordinate,
+        toString: toString
     };
 }
 

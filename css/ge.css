@@ -5,6 +5,11 @@ circle.active, circle.dragging {
     fill: orange;
 }
 
+line {
+    stroke: white;
+    opacity: 0.5;
+}
+
 line.active, line.dragging {
     fill: orange;
     stroke: orange;

@@ -45,23 +45,29 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.5/leaflet.js"></script>
 <script src="lib/underscore.min.js"></script>
+<script src="http://maps.google.com/maps/api/js?v=3&sensor=false"></script>
+<script src="lib/leaflet-plugins-1.3.11/layer/tile/Google.js"></script>
 <script src="src/Graph.js"></script>
 <script src="src/GraphEdit.js"></script>
 <script>
     // D3 + Leaflet: http://bost.ocks.org/mike/leaflet/
-    var map = new L.Map("map", {center: [38.8054, -77.1676], zoom: 12})
-            .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+    var map = new L.Map("map", {center: [38.8961, -76.9916], zoom: 18})
+            .addLayer(new L.Google());
+            //.addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+//    var ggl2 = new L.Google('TERRAIN');
+//    map.addLayer(ggl2);
+
     var graph = new Graph(_),
-            v0 = graph.addVertex(0, -77.1676, 38.8054),
-            v1 = graph.addVertex(1, -77.1665, 38.9719),
-            v2 = graph.addVertex(2, -77.0584, 38.9724),
-            v3 = graph.addVertex(3, -76.9478, 38.9700),
-            v4 = graph.addVertex(4, -76.9499, 38.8896),
-            v5 = graph.addVertex(5, -76.9513, 38.8084),
+            v0 = graph.addVertex(0, -76.99275076389313, 38.89646892251579),
+            v1 = graph.addVertex(1, -76.99255764484406, 38.89654824802582),
+            v2 = graph.addVertex(2,  -76.99255228042603, 38.89625599570857),
+            v3 = graph.addVertex(3, -76.9927453994751, 38.89619337005556),
+            v4 = graph.addVertex(4, -76.99366271495819, 38.895825965112095),
+            v5 = graph.addVertex(5, -76.99367344379425, 38.89607229363646),
             e0 = graph.addEdge(0, v0, v1),
             e1 = graph.addEdge(1, v1, v2),
-            e2 = graph.addEdge(2, v2, v3);
-            e3 = graph.addEdge(3, v3, v4);
+            e2 = graph.addEdge(2, v2, v3),
+            e3 = graph.addEdge(3, v3, v4),
             e4 = graph.addEdge(4, v4, v5);
 
     var graphEdit = new GraphEdit(d3, _, map, graph);
