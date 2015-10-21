@@ -5,14 +5,16 @@ function GraphEdit(d3, _, map, graph, parameters) {
         temporaryEdges = [];
 
     // Prepare svg elements
-    //var svg = d3.select("#map")
+    // var svg = d3.select("#map")
     //        .append("svg")
     //        .attr("width", parameters.width)
     //        .attr("height", parameters.height);
+
     var svg = d3.select(map.getPanes().overlayPane)
         .append("svg")
         .attr("width", 960)
         .attr("height", 500);
+
     var segmentContainer = svg.append("g").attr("class", "leaflet-zoom-hide"),
         temporaryDomContainer = svg.append("g").attr("class", "leaflet-zoom-hide"),
         vertexContainer = svg.append("g").attr("class", "leaflet-zoom-hide");
@@ -26,6 +28,18 @@ function GraphEdit(d3, _, map, graph, parameters) {
     //    .enter().append("path");
 
     map.on("viewreset", update);
+    map.on("move", function () {
+        var transform = d3.select('.leaflet-map-pane').style('transform'),
+            translation = transform.split(",").map(function(x) { return x.trim().replace(")", ""); });
+        var x = parseInt(translation[translation.length - 2], 10),
+            y =  parseInt(translation[translation.length - 1], 10);
+        svg.style({"left": -x + "px", "top": -y + "px"});
+        segmentContainer.attr("transform", "translate(" + x + "," + y + ")");
+        temporaryDomContainer.attr("transform", "translate(" + x + "," + y + ")");
+        vertexContainer.attr("transform", "translate(" + x + "," + y + ")");
+        console.log("move", translation);
+    });
+
 
     //function projectPoint(x, y) {
     //    var point = map.latLngToLayerPoint(new L.LatLng(y, x));
