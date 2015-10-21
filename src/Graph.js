@@ -140,9 +140,13 @@ function Graph(_) {
     };
 }
 
-function Vertex (id, x, y) {
+function Vertex (id, lng, lat) {
     var _id = id,
-        _edges = [];
+        _edges = [],
+        x = lng,
+        y = lat,
+        _lat = lat,
+        _lng = lng;
 
     /**
      * Add an edgeId.
@@ -175,6 +179,8 @@ function Vertex (id, x, y) {
     return {
         x: x,
         y: y,
+        lat: _lat,
+        lng: _lng,
         id: _id,
         addEdge: addEdge,
         getEdges: getEdges,

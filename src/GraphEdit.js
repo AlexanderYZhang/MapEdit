@@ -1,17 +1,36 @@
-function GraphEdit(d3, _, graph) {
-    var mode = "draw", // "edit"
+function GraphEdit(d3, _, map, graph, parameters) {
+    var mode = "explore", // "edit"
         mousedownVertex,
         temporaryVertices = [],
         temporaryEdges = [];
 
     // Prepare svg elements
-    var svg = d3.select("body")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height),
-        segmentContainer = svg.append("g"),
-        temporaryDomContainer = svg.append("g"),
-        vertexContainer = svg.append("g");
+    //var svg = d3.select("#map")
+    //        .append("svg")
+    //        .attr("width", parameters.width)
+    //        .attr("height", parameters.height);
+    var svg = d3.select(map.getPanes().overlayPane)
+        .append("svg")
+        .attr("width", 960)
+        .attr("height", 500);
+    var segmentContainer = svg.append("g").attr("class", "leaflet-zoom-hide"),
+        temporaryDomContainer = svg.append("g").attr("class", "leaflet-zoom-hide"),
+        vertexContainer = svg.append("g").attr("class", "leaflet-zoom-hide");
+
+    //var collection = {"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[0,90],[-360,90],[-360,-90],[0,-90],[0,90]]]}}]};
+    //var transform = d3.geo.transform({point: projectPoint}),
+    //    path = d3.geo.path().projection(transform);
+    //
+    //var feature = g.selectAll("path")
+    //    .data(collection.features)
+    //    .enter().append("path");
+
+    map.on("viewreset", update);
+
+    //function projectPoint(x, y) {
+    //    var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+    //    this.stream.point(point.x, point.y);
+    //}
 
     // Define behaviors and attributes
     var dragEdge = d3.behavior.drag()
@@ -26,30 +45,37 @@ function GraphEdit(d3, _, graph) {
             .on("dragend", endedDraggingVertex),
         edgeCoordinates = {
             x1: function (edge) {
-                return edge.source.x;
+                var point = map.latLngToLayerPoint(new L.LatLng(edge.source.lat, edge.source.lng));
+                return point.x;
             },
             y1: function (edge) {
-                return edge.source.y;
+                var point = map.latLngToLayerPoint(new L.LatLng(edge.source.lat, edge.source.lng));
+                return point.y;
             },
             x2: function (edge) {
-                return edge.target.x;
+                var point = map.latLngToLayerPoint(new L.LatLng(edge.target.lat, edge.target.lng));
+                return point.x;
             },
             y2: function (edge) {
-                return edge.target.y;
+                var point = map.latLngToLayerPoint(new L.LatLng(edge.target.lat, edge.target.lng));
+                return point.y;
             }
         },
         vertexCoordinate = {
             cx: function (d) {
-                return d.x;
+                var point = map.latLngToLayerPoint(new L.LatLng(d.lat, d.lng));
+                return point.x;
             },
             cy: function (d) {
-                return d.y;
+                var point = map.latLngToLayerPoint(new L.LatLng(d.lat, d.lng));
+                return point.y;
             }
         };
 
     // Attach callbacks
     svg.on("mouseup", mouseUp);
     svg.on("mousemove", mouseMove);
+    svg.on("mousedown", mouseDown);
     d3.selectAll('.mode-radio-labels').selectAll('input')
         .on("click", function () {
           mode = d3.select(this).property("value");
@@ -59,20 +85,28 @@ function GraphEdit(d3, _, graph) {
      * A callback for a mouse event
      * @param d
      */
+    function mouseDown () {
+        if (mode == "draw" || mode == "edit" || mode == "delete") {
+            d3.event.stopPropagation();
+        }
+    }
     function mouseUp () {
         if (mode == "draw") {
-
+            d3.event.stopPropagation();
+            var point = map.layerPointToLatLng(L.point(d3.mouse(this)[0], d3.mouse(this)[1]));
             if (mousedownVertex) {
                 // Create a new vertex and a new edge
-                var newVertex = graph.addVertex(graph.getUniqueVertexId(), d3.mouse(this)[0], d3.mouse(this)[1]);
+                var newVertex = graph.addVertex(graph.getUniqueVertexId(), point.lng, point.lat);
                 graph.addEdge(graph.getUniqueEdgeId(), mousedownVertex, newVertex);
             } else {
                 // Create a new vertex
-                graph.addVertex(graph.getUniqueVertexId(), d3.mouse(this)[0], d3.mouse(this)[1]);
+                graph.addVertex(graph.getUniqueVertexId(), point.lng, point.lat);
            }
             mousedownVertex = null;
             temporaryVertices.splice(0, temporaryVertices.length);  // Empty an array. http://stackoverflow.com/questions/1232040/how-to-empty-an-array-in-javascript
             temporaryEdges.splice(0, temporaryEdges.length);
+        } else if (mode == "edit" || mode == "delete") {
+            d3.event.stopPropagation();
         }
 
         update();
@@ -129,7 +163,7 @@ function GraphEdit(d3, _, graph) {
      * A callback for the vertex dragend event.
      * @param d
      */
-    function endedDraggingVertex(d) {
+    function endedDraggingVertex() {
         if (mode == "edit") {
             d3.select(this).classed("dragging", false);
         }
@@ -222,6 +256,12 @@ function GraphEdit(d3, _, graph) {
      */
     var line, circle, temporaryLine, temporaryCircle;
     function update() {
+        for (var i = graph.vertices.length - 1; i >= 0; i--) {
+            var point = map.latLngToLayerPoint(new L.LatLng(graph.vertices[i].lat, graph.vertices[i].lng));
+            graph.vertices[i].x = point.x;
+            graph.vertices[i].y = point.y;
+        }
+
         // Render Segments
         line = segmentContainer.selectAll("line")
             .data(graph.edges);
@@ -232,7 +272,7 @@ function GraphEdit(d3, _, graph) {
             .on(edgeEvents)
             .call(dragEdge);
         line.exit().remove();
-        line.attr(edgeCoordinates);
+
 
         circle = vertexContainer.selectAll("circle")
             .data(graph.vertices);
@@ -244,7 +284,9 @@ function GraphEdit(d3, _, graph) {
             .on(vertexEvents)
             .call(dragVertex);
         circle.exit().remove();
+
         circle.attr(vertexCoordinate);
+        line.attr(edgeCoordinates);
 
         temporaryLine = temporaryDomContainer.selectAll("line")
             .data(temporaryEdges);
@@ -253,7 +295,7 @@ function GraphEdit(d3, _, graph) {
             .attr("stroke", "black")
             .attr("stroke-opacity", 0.2);
         temporaryLine.exit().remove();
-        temporaryLine.attr(edgeCoordinates);
+
 
         temporaryCircle = temporaryDomContainer.selectAll("circle")
             .data(temporaryVertices);
@@ -265,20 +307,8 @@ function GraphEdit(d3, _, graph) {
             .attr("r", 6);
         temporaryCircle.exit().remove();
         temporaryCircle.attr(vertexCoordinate);
+        temporaryLine.attr(edgeCoordinates);
     }
-    // http://bl.ocks.org/mbostock/4560481#index.html
-    // var brush = svg.append("g")
-    //    .attr("class", "brush")
-    //    .call(d3.svg.brush()
-    //        .x(d3.scale.identity().domain([0, width]))
-    //        .y(d3.scale.identity().domain([0, height]))
-    //        .on("brush", function() {
-    //            var extent = d3.event.target.extent();
-    //            circle.classed("active", function(d) {
-    //                return extent[0][0] <= d.x && d.x < extent[1][0]
-    //                    && extent[0][1] <= d.y && d.y < extent[1][1];
-    //            });
-    //        }));
 
     update();
     return {
