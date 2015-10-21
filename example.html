@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.5/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.5/leaflet.css" />
+</head>
+
+<style>
+    #map {
+        width: 960px;
+        height: 500px;
+    }
+
+    svg {
+        position: relative;
+    }
+
+    path {
+        fill: #000;
+        fill-opacity: .2;
+        stroke: #fff;
+        stroke-width: 1.5px;
+    }
+
+    path:hover {
+        fill: brown;
+        fill-opacity: .7;
+    }
+
+    .active {
+        fill: orange;
+    }
+
+</style>
+<body>
+<div id="map-wrap">
+    <div id="map">
+    </div>
+</div>
+</body>
+<script>
+    // http://bost.ocks.org/mike/leaflet/
+    var map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
+            .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+    var svg = d3.select(map.getPanes().overlayPane).append("svg"),
+            g = svg.append("g").attr("class", "leaflet-zoom-hide");
+
+    d3.json("data/world.json", function(error, collection) {
+        if (error) throw error;
+
+        var transform = d3.geo.transform({point: projectPoint}),
+                path = d3.geo.path().projection(transform);
+
+        var feature = g.selectAll("path")
+                .data(collection.features)
+                .enter().append("path");
+
+        var circle = g.selectAll("circle")
+                .data([[-77.036548, 38.897729]])
+                .enter().append("circle")
+                .on("mouseover", function (d) {
+                    d3.select(this).classed("active", true);
+                })
+                .on("mouseout", function () {
+                    d3.select(this).classed("active", false);
+                });
+
+
+        map.on("viewreset", reset);
+        reset();
+
+        // Reposition the SVG to cover the features.
+        function reset() {
+            var bounds = path.bounds(collection),
+                    topLeft = bounds[0],
+                    bottomRight = bounds[1];
+
+            svg .attr("width", bottomRight[0] - topLeft[0])
+                    .attr("height", bottomRight[1] - topLeft[1])
+                    .style("left", topLeft[0] + "px")
+                    .style("top", topLeft[1] + "px");
+
+            g   .attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
+
+            feature.attr("d", path);
+            circle.attr("cx", function (d) {
+                var point = map.latLngToLayerPoint(new L.LatLng(d[1], d[0]));
+                return point.x;
+            })
+                .attr("cy", function (d) {
+                        var point = map.latLngToLayerPoint(new L.LatLng(d[1], d[0]));
+                        return point.y;
+                    })
+                .attr("r", 5);
+        }
+
+        // Use Leaflet to implement a D3 geometric transformation.
+        function projectPoint(x, y) {
+            var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+            this.stream.point(point.x, point.y);
+        }
+
+
+    });
+
+
+</script>
+</html>

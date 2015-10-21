@@ -8,5 +8,5 @@ circle.active, circle.dragging {
 line.active, line.dragging {
     fill: orange;
     stroke: orange;
-    stroke-opacity: 1;
+    stroke-opacity: 0.9;
 }

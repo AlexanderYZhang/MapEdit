@@ -87,9 +87,9 @@ function GraphEdit(d3, _, map, graph, parameters) {
         };
 
     // Attach callbacks
-    svg.on("mouseup", mouseUp);
-    svg.on("mousemove", mouseMove);
-    svg.on("mousedown", mouseDown);
+    svg.on("mouseup", mouseUp)
+        .on("mousemove", mouseMove)
+        .on("mousedown", mouseDown);
     d3.selectAll('.mode-radio-labels').selectAll('input')
         .on("click", function () {
           mode = d3.select(this).property("value");
@@ -107,7 +107,12 @@ function GraphEdit(d3, _, map, graph, parameters) {
     function mouseUp () {
         if (mode == "draw") {
             d3.event.stopPropagation();
-            var point = map.layerPointToLatLng(new L.Point(d3.mouse(this)[0], d3.mouse(this)[1]));
+            console.log(this, d3.mouse(this));
+            var offset = {
+                x: parseInt(d3.select(this).style("left").replace("px", ""), 10),
+                y: parseInt(d3.select(this).style("top").replace("px", ""), 10)
+                },
+                point = map.layerPointToLatLng(new L.Point(d3.mouse(this)[0] + offset.x, d3.mouse(this)[1] + offset.y));
             if (mousedownVertex) {
                 // Create a new vertex and a new edge
                 var newVertex = graph.addVertex(graph.getUniqueVertexId(), point.lng, point.lat);
@@ -131,9 +136,13 @@ function GraphEdit(d3, _, map, graph, parameters) {
     function mouseMove() {
         if (mode == "draw") {
             if (temporaryVertices.length == 2) {
-                var point = map.layerPointToLatLng(new L.Point(d3.mouse(this)[0], d3.mouse(this)[1]));
-                temporaryVertices[1].x = d3.mouse(this)[0];
-                temporaryVertices[1].y = d3.mouse(this)[1];
+                var offset = {
+                        x: parseInt(d3.select(this).style("left").replace("px", ""), 10),
+                        y: parseInt(d3.select(this).style("top").replace("px", ""), 10)
+                    },
+                    point = map.layerPointToLatLng(new L.Point(d3.mouse(this)[0] + offset.x, d3.mouse(this)[1] + offset.y));
+                temporaryVertices[1].x = d3.mouse(this)[0] + offset.x;
+                temporaryVertices[1].y = d3.mouse(this)[1] + offset.y;
                 temporaryVertices[1].lat = point.lat;
                 temporaryVertices[1].lng = point.lng;
             }
@@ -215,7 +224,12 @@ function GraphEdit(d3, _, map, graph, parameters) {
                 .attr("x2", d.target.x += d3.event.dx)
                 .attr("y2", d.target.y += d3.event.dy);
 
-            var sourceLatLng = map.layerPointToLatLng(d.source.y, d.source.y);
+            var sourceLatLng = map.layerPointToLatLng(new L.Point(d.source.x, d.source.y));
+            var targetLatLng = map.layerPointToLatLng(new L.Point(d.target.x, d.target.y));
+            d.source.lat = sourceLatLng.lat;
+            d.source.lng = sourceLatLng.lng;
+            d.target.lat = targetLatLng.lat;
+            d.target.lng = targetLatLng.lng;
         }
 
         update();
