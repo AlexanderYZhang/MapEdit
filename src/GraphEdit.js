@@ -147,7 +147,6 @@ function GraphEdit(d3, _, map, graph, parameters) {
      * @param d
      */
     function startedDraggingVertex(d) {
-        console.log("Start dragging");
         if (mode == "edit") {
             d3.event.sourceEvent.stopPropagation();
             d3.select(this).classed("dragging", true);
@@ -159,7 +158,6 @@ function GraphEdit(d3, _, map, graph, parameters) {
      * @param d
      */
     function draggingVertex(d) {
-        console.log("Dragging Vertex");
         if (mode == "edit") {
             // Update node coordinates
             d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
@@ -190,10 +188,8 @@ function GraphEdit(d3, _, map, graph, parameters) {
      * @param d
      */
     function endedDraggingVertex() {
-        console.log("End editing");
         if (mode == "edit") {
             d3.event.sourceEvent.stopPropagation();
-
             d3.select(this).classed("dragging", false);
         }
         update();
@@ -218,6 +214,8 @@ function GraphEdit(d3, _, map, graph, parameters) {
                 .attr("y1", d.source.y += d3.event.dy)
                 .attr("x2", d.target.x += d3.event.dx)
                 .attr("y2", d.target.y += d3.event.dy);
+
+            var sourceLatLng = map.layerPointToLatLng(d.source.y, d.source.y);
         }
 
         update();
