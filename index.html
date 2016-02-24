@@ -5,7 +5,11 @@
     <title>MapEdit</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.5/leaflet.css" />
+
     <link rel="stylesheet" href="css/ge.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <script src="lib/jquery-2.1.4.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 </head>
 <style>
     #map {
@@ -27,6 +31,27 @@
 
 </style>
 <body>
+<div class="overlay-bg">
+</div>
+<div class="help-popup">
+    <p>
+        <span class="glyphicon glyphicon-question-sign" style="vertical-align: left;"></span>
+        <span class="text">Press this key to explore</span>
+    </p>
+    <p>
+        <span class="glyphicon glyphicon-question-sign" style="vertical-align: left;"></span>
+        <span class="text">Press this key to draw</span>
+    </p>
+    <p>
+        <span class="glyphicon glyphicon-question-sign" style="vertical-align: left;"></span>
+        <span class="text">Press this key to edit</span>
+    </p>
+    <p>
+        <span class="glyphicon glyphicon-question-sign" style="vertical-align: left;"></span>
+        <span class="text">Press this key to delete</span>
+    </p>
+    <button class="close-btn">Close</button>
+</div>
 <form>
     <label class="mode-radio-labels"><input type="radio" name="mode" value="explore" checked> Explore</label>
     <label class="mode-radio-labels"><input type="radio" name="mode" value="draw"> Draw</label>
@@ -34,8 +59,10 @@
     <label class="mode-radio-labels"><input type="radio" name="mode" value="delete"> Delete</label>
 </form>
 <div id="map">
-
 </div>
+<button type="button" class="btn btn-default" id="help-button" aria-label="Left Align">
+<span class="glyphicon glyphicon-question-sign"></span>
+</button>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.5/leaflet.js"></script>

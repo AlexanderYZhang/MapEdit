@@ -1,3 +1,35 @@
+$(document).ready(function(){
+ 
+    // function to show our popups
+ 
+    // function to close our popups
+    function closePopup(){
+        $('.overlay-bg, .help-popup').hide(); //hide the overlay
+    }
+    // show popup when you click on the link
+    $('#help-button').click(function(event){
+        event.preventDefault(); // disable normal link function so that it doesn't refresh the page
+        var selectedPopup = $(this).data('showpopup'); //get the corresponding popup to show
+        var docHeight = $(document).height(); //grab the height of the page
+        var scrollTop = $(window).scrollTop(); //grab the px value from the top of the page to where you're scrolling
+        $('.overlay-bg').show().css({'height' : docHeight}); //display your popup background and set height to the page height
+        $('.help-popup').show().css({'top':scrollTop+20+'px'});
+    });
+   
+    // hide popup when user clicks on close button or if user clicks anywhere outside the container
+    $('.close-btn, .overlay-bg').click(function(){
+        closePopup();
+    });
+     
+    // hide the popup when user presses the esc key
+    $(document).keyup(function(e) {
+        if (e.keyCode == 27) { // if user presses esc key
+            closePopup();
+        }
+    });
+});
+
+
 function GraphEdit(d3, _, map, graph, parameters) {
     var mode = "explore", // "edit"
         mousedownVertex,
@@ -9,7 +41,6 @@ function GraphEdit(d3, _, map, graph, parameters) {
     //        .append("svg")
     //        .attr("width", parameters.width)
     //        .attr("height", parameters.height);
-
     var svg = d3.select(map.getPanes().overlayPane)
         .append("svg")
         .attr("width", 960)
@@ -85,17 +116,29 @@ function GraphEdit(d3, _, map, graph, parameters) {
                 return point.y;
             }
         };
-
+    $(document).keypress(function(event) {
+        key = String.fromCharCode(event.which);
+        if (key == 'a') {
+            mode = "explore";
+        } else if (key == 's') {
+            mode = "draw";
+            console.log(mode)
+        } else if (key == 'd') {
+            mode = "edit";
+        } else if (key == 'f') {
+            mode = "delete";
+        }
+    })
     // Attach callbacks
     svg.on("mouseup", mouseUp)
         .on("mousemove", mouseMove)
         .on("mousedown", mouseDown);
-    d3.selectAll('.mode-radio-labels').selectAll('input')
+    /*d3.selectAll('.mode-radio-labels').selectAll('input')
         .on("click", function () {
           mode = d3.select(this).property("value");
         });
-
-    /**
+    */
+    /*
      * A callback for a mouse event
      * @param d
      */
@@ -103,6 +146,7 @@ function GraphEdit(d3, _, map, graph, parameters) {
         if (mode == "draw" || mode == "edit" || mode == "delete") {
             d3.event.stopPropagation();
         }
+
     }
     function mouseUp () {
         if (mode == "draw") {
@@ -244,11 +288,11 @@ function GraphEdit(d3, _, map, graph, parameters) {
     // Reference
     // http://bl.ocks.org/rkirsling/5001347
     var vertexEvents = {
-        mouseover: function () {
-            d3.select(this).classed("active", true);
+        mouseover: function (d) {
+            d3.select(".point-" + d.point.id).classed("active", true);
         },
-        mouseout: function () {
-            d3.select(this).classed("active", false);
+        mouseout: function (d) {
+            d3.select(".point-" + d.point.id).classed("active", false);
         },
         mousedown: function (d) {
             if (mode == "draw") {
@@ -294,37 +338,115 @@ function GraphEdit(d3, _, map, graph, parameters) {
     /**
      * A method to render stuff.
      */
-    var line, circle, temporaryLine, temporaryCircle;
+    var line, circle, temporaryLine, temporaryPath, temporaryCircle, path, point, clips;
     function update() {
         for (var i = graph.vertices.length - 1; i >= 0; i--) {
             var point = map.latLngToLayerPoint(new L.LatLng(graph.vertices[i].lat, graph.vertices[i].lng));
             graph.vertices[i].x = point.x;
             graph.vertices[i].y = point.y;
         }
-
         // Render Segments
+        var voronoi = d3.geom.voronoi()
+            .x(function(d) {return d.x})
+            .y(function(d) {return d.y})
+            .clipExtent([[0, 0], [960, 500]]);
+        
         line = segmentContainer.selectAll("line")
             .data(graph.edges);
         line.enter().append("line")
             .attr("stroke-width", 3)
+            .attr("x1", function(d) {return d.source.x})
+            .attr("x2", function(d) {return d.target.x})
+            .attr("y1", function(d) {return d.source.y})
+            .attr("y2", function(d) {return d.target.y})
             .on(edgeEvents)
             .call(dragEdge);
-        line.exit().remove();
 
+        /*
+        clips = vertexContainer.append('g')
+            .attr("id", "point-clips");
+        clips.selectAll("clipPath")
+            .data(graph.vertices)
+            .enter()
+            .append("clipPath")
+            .attr("id", function(d, i) {return "clip-" + i})
+            .append("svg:circle")
+            .attr("r", 20)
+            .attr("cx", function(d) {return d.x})
+            .attr("cy", function(d) {return d.y})
+            .attr("fill", "steelBlue")
+            .attr("opacity", 1);
+        paths = vertexContainer.append('g')
+            .attr("id", "point-paths");
+        paths.selectAll("path")
+            .data(d3.geom.voronoi(graph.vertices))
+            .enter().append("path")
+            .attr("id", function(d,i) { 
+                return "path-"+i; })
+            .attr("clip-path", function(d,i) { return "url(#clip-"+i+")"; })
+            .style("fill", "red")
+            .style('fill-opacity', 0.4)
+            .style("stroke", "white");
+        points = vertexContainer.append('g')
+            .attr("id", "points");
+        
+        points.selectAll("circle")
+            .data(graph.vertices)
+            .enter().append("circle")
+            .attr("id", function(d, i) { 
+                return "point-"+i; })
+            .attr("r", 2)
+            .attr('stroke', 'none');
+        */
+        var clips = vertexContainer.append("g").attr("id", "clips");
+        var paths = vertexContainer.append("g").attr("id", "paths");
+        var points = vertexContainer.append("g").attr("id", "points");
 
-        circle = vertexContainer.selectAll("circle")
+        clips.selectAll("clipPath")
+            .data(graph.vertices)
+            .enter().append("clipPath")
+            .attr("id", function(d, i) {return "clip-" + i})
+            .append("circle")
+            .attr("fill", "steelblue")
+            .style("opacity", 1)
+            .attr("r", 20)
+            .attr("cx", function(d) {return d.x})
+            .attr("cy", function(d) {return d.y});
+        paths.selectAll("path")
+             .data(voronoi(graph.vertices))
+             .enter().append("path")
+             .attr("d", function(d) {return "M" + d.join("L") + "Z"})
+             .attr("class", function(d, i) {return "voronoi-" + i;})
+             .attr("clip-path", function(d,i) {return "url(#clip-" + i + ")";})
+             .style("fill", "red")
+             .style("stroke", "white")
+             .style("fill-opacity", .4)
+             .style("pointer-events", "all")
+             .on(vertexEvents)
+             .call(dragVertex);
+        points.selectAll("circle")
+            .data(graph.vertices)
+            .enter().append("circle")
+            .attr("fill", "black")
+            .attr("r", 2)
+            .attr("cx", function(d) {console.log("hi");return d.x})
+            .attr("cy", function(d) {return d.y});
+        /*circle = vertexContainer.selectAll("circle")
             .data(graph.vertices);
         circle.enter().append("circle")
             .attr("fill", "steelblue")
             .attr("stroke", "white")
             .attr("stroke-width", 2)
-            .attr("r", 6)
+            .attr("r", 12)
+            .style("opacity", .2)
             .on(vertexEvents)
             .call(dragVertex);
         circle.exit().remove();
-
-        circle.attr(vertexCoordinate);
-        line.attr(edgeCoordinates);
+        */
+        vertexContainer.selectAll('circle').data(graph.vertices).attr(vertexCoordinate)
+        //circle.selectAll('circle').data(graph.vertices).attr(vertexCoordinate);
+        //backCircle.selectAll('circle').data(graph.vertices).attr(vertexCoordinate);
+        // line.attr(edgeCoordinates);
 
         temporaryLine = temporaryDomContainer.selectAll("line")
             .data(temporaryEdges);
@@ -335,15 +457,19 @@ function GraphEdit(d3, _, map, graph, parameters) {
 
         temporaryCircle = temporaryDomContainer.selectAll("circle")
             .data(temporaryVertices);
+        temporaryPath = temporaryDomContainer.selectAll("path")
+            .data(voronoi(temporaryVertices))
+            .enter().append("path")
+            .attr("d", function(d) {return "M" + d.join("L") + "Z"})
 
-        temporaryCircle.enter().append("circle")
-            .attr("fill", "orange")
-            .attr("stroke", "white")
-            .attr("stroke-width", 2)
-            .attr("r", 6);
-        temporaryCircle.exit().remove();
-        temporaryCircle.attr(vertexCoordinate);
-        temporaryLine.attr(edgeCoordinates);
+         temporaryCircle.enter().append("circle")
+             .attr("fill", "orange")
+             .attr("stroke", "white")
+             .attr("stroke-width", 2)
+             .attr("r", 6);
+         temporaryCircle.exit().remove();
+         temporaryCircle.attr(vertexCoordinate);
+         temporaryLine.attr(edgeCoordinates);
     }
 
     update();
